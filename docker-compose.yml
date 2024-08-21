@@ -1,0 +1,42 @@
+networks:
+    backend:
+
+services:
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - "backend"
+    volumes:
+      - static:/app/staticfiles
+      - media:/app/media
+    environment:
+      - AI_PROXY_API_KEY=${AI_PROXY_API_KEY}
+
+  postgres:
+    image: postgres:15-alpine
+    restart: on-failure
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    networks:
+      - "backend"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  postgres_data:
+  static:
+  media:
